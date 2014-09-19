@@ -177,7 +177,29 @@ summary(lm(mds2~Wet_leaf_Mass_g_2012, envtdata))
 plot(mds1~Wet_leaf_Mass_g_2012, envtdata)
 plot(mds2~Wet_leaf_Mass_g_2012, envtdata)
 
-# It seems like gene regulation is effected by soruce population environmental variables? How could this be explained? How about the trait values? ARe there differences between years?
+# It seems like gene regulation is effected by source population environmental variables? How could this be explained? How about the trait values? Are there differences between years?
+
+
+##### Let's try glm with multiple factors #####
+# think about the design matrix
+
+# Indicates which population each individual is from
+sample_info = data.frame(pop=pops.M, indiv=indiv.M)
+design.mat = model.matrix(~0+pop, data=sample_info) # differences among populations
+# envt = rep(c("dry", "wet", "wet", "dry"), 2) # optionally, a categorical environment indicator for each population
+
+# Unfortunately there are not a  lot of tools for RNA-seq yet but lluckilly microarrays were extremely popular and programmers of limma (which is a microarray analysis tool) put in a function to transform your count data to a microarray-like dataset. This is done with voom function.
+
+voom= voom(dge.M, design.mat)
+
+# Now let's fit the models
+
+fit = lmFit(voom,design.mat)
+fit = eBayes(fit)
+sig.genes = topTable(fit,coef=ncol(design.mat))
+write.table(sig.genes, sep="\t", file="sig_genes.txt")
+
+
 
 ### Gene by gene regressions ###
 library(MASS)
